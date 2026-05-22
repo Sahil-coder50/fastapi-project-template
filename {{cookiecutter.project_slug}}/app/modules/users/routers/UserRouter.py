@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.users.schema import UserCreate, UserOut
-from app.modules.users.service import register_user, list_users
+from app.modules.users.schemas.UserSchema import UserCreate, UserOut
+from app.modules.users.services.UserService import register_user, list_users
 
 from app.dependencies.db import get_db
 from app.pagination.base import PaginatedResponse

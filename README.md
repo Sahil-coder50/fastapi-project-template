@@ -22,46 +22,85 @@ cookiecutter --version
 
 ```text
 fastapi-project-template
+├── README.md
 ├── cookiecutter.json
 └── {{cookiecutter.project_slug}}
     ├── README.md
     ├── alembic
     │   ├── env.py
+    │   ├── script.py.mako
     │   └── versions
+    ├── alembic.ini
     ├── app
-    │   ├── api
-    │   │   ├── deps.py
-    │   │   └── v1
-    │   │       ├── endpoints
-    │   │       │   └── health.py
-    │   │       └── router.py
     │   ├── core
     │   │   ├── config.py
-    │   │   ├── database.py
+    │   │   ├── exceptions.py
     │   │   ├── logging.py
     │   │   └── security.py
-    │   ├── exceptions
+    │   ├── db
+    │   │   ├── base.py
+    │   │   ├── base_class.py
+    │   │   └── session.py
+    │   ├── dependencies
+    │   │   ├── db.py
+    │   │   └── pagination.py
     │   ├── main.py
-    │   ├── middleware
-    │   ├── models
-    │   ├── repositories
-    │   │   └── user_repo.py
-    │   ├── schemas
-    │   ├── services
-    │   │   └── user_service.py
-    │   ├── tests
+    │   ├── middlewares
+    │   │   ├── __init__.py
+    │   │   └── cors.py
+    │   ├── modules
+    │   │   └── users
+    │   │       ├── dependency.py
+    │   │       ├── models
+    │   │       │   ├── BaseModel.py
+    │   │       │   ├── ModelCommonImport.py
+    │   │       │   ├── UserModel.py
+    │   │       │   └── __init__.py
+    │   │       ├── repositories
+    │   │       │   ├── UserRepo.py
+    │   │       │   └── __init__.py
+    │   │       ├── routers
+    │   │       │   ├── UserRouter.py
+    │   │       │   └── __init__.py
+    │   │       ├── schemas
+    │   │       │   ├── UserSchema.py
+    │   │       │   └── __init__.py
+    │   │       └── services
+    │   │           ├── UserService.py
+    │   │           └── __init__.py
+    │   ├── pagination
+    │   │   ├── base.py
+    │   │   ├── cursor.py
+    │   │   └── limit_offset.py
     │   └── utils
     ├── docker
     │   ├── Dockerfile
-    │   └── docker-compose.yml
+    │   └── compose.yaml
     └── requirements.txt
 ```
 
 ### Command for making the Structure
 
 ```bash
-mkdir -p "{{cookiecutter.project_slug}}"/{alembic/versions,app/api/v1/endpoints,app/core,app/{exceptions,middleware,models,repositories,schemas,services,tests,utils},docker} && \
-touch cookiecutter.json "{{cookiecutter.project_slug}}"/{README.md,requirements.txt,alembic/env.py,app/main.py,app/api/deps.py,app/api/v1/router.py,app/api/v1/endpoints/health.py,app/core/{config.py,database.py,logging.py,security.py},app/repositories/user_repo.py,app/services/user_service.py,docker/{Dockerfile,docker-compose.yml}}
+mkdir -p "{{cookiecutter.project_slug}}"/{alembic/versions,app/core,app/db,app/dependencies,app/middlewares,app/modules/users/models,app/modules/users/repositories,app/modules/users/routers,app/modules/users/schemas,app/modules/users/services,app/pagination,app/utils,docker} && \
+touch cookiecutter.json README.md \
+"{{cookiecutter.project_slug}}"/README.md \
+"{{cookiecutter.project_slug}}"/requirements.txt \
+"{{cookiecutter.project_slug}}"/alembic.ini \
+"{{cookiecutter.project_slug}}"/alembic/{env.py,script.py.mako} \
+"{{cookiecutter.project_slug}}"/app/main.py \
+"{{cookiecutter.project_slug}}"/app/core/{config.py,exceptions.py,logging.py,security.py} \
+"{{cookiecutter.project_slug}}"/app/db/{base.py,base_class.py,session.py} \
+"{{cookiecutter.project_slug}}"/app/dependencies/{db.py,pagination.py} \
+"{{cookiecutter.project_slug}}"/app/middlewares/{__init__.py,cors.py} \
+"{{cookiecutter.project_slug}}"/app/modules/users/dependency.py \
+"{{cookiecutter.project_slug}}"/app/modules/users/models/{BaseModel.py,ModelCommonImport.py,UserModel.py,__init__.py} \
+"{{cookiecutter.project_slug}}"/app/modules/users/repositories/{UserRepo.py,__init__.py} \
+"{{cookiecutter.project_slug}}"/app/modules/users/routers/{UserRouter.py,__init__.py} \
+"{{cookiecutter.project_slug}}"/app/modules/users/schemas/{UserSchema.py,__init__.py} \
+"{{cookiecutter.project_slug}}"/app/modules/users/services/{UserService.py,__init__.py} \
+"{{cookiecutter.project_slug}}"/app/pagination/{base.py,cursor.py,limit_offset.py} \
+"{{cookiecutter.project_slug}}"/docker/{Dockerfile,compose.yaml}
 ```
 
 ## Step 4: cookiecutter.json
@@ -90,11 +129,11 @@ app.include_router(router, prefix="/api/v1")
 
 ## Step 6: Router Aggregation
 
-### api/v1/router.py
+### app/core/main.py
 
 ```bash
 from fastapi import APIRouter
-from app.api.v1.endpoints import health
+from app.modules.users.UserRouter import health      # Example
 
 router = APIRouter()
 
@@ -102,7 +141,7 @@ router.include_router(health.router, prefix="/health", tags=["Health"])
 
 ```
 
-### api/v1/endpoints/health.py
+### app/modules/users/UserRouter.py
 
 ```bash
 from fastapi import APIRouter
@@ -118,12 +157,19 @@ def health_check():
 
 ### app/core/config.py
 ```bash
+settings = Settings()
 from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "{{ cookiecutter.project_name }}"
-    DATABASE_URL: str
+    
+    SYNC_DATABASE_URL: str
+    ASYNC_DATABASE_URL: str
+    
+    REDIS_URL: str
     SECRET_KEY: str
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
     class Config:
         env_file = ".env"
@@ -133,35 +179,42 @@ settings = Settings()
 
 ## Step 8: Database Setup
 
-### app/core/database.py
+### app/db/session.py
 ```bash
-from sqlalchemy import create_engine
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from app.core.config import settings
 
-engine = create_engine(settings.DATABASE_URL)
-SessionLocal = sessionmaker(bind=engine)
+engine = create_async_engine(
+    settings.ASYNC_DATABASE_URL,
+    pool_size=10,
+    max_overflow=20,
+    pool_pre_ping=True,
+    echo=False
+)
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+AsyncSessionLocal = sessionmaker(
+    # autocommit=False,
+    # autoflush=False,
+    bind=engine,
+    class_=AsyncSession,
+    expire_on_commit=False
+)
 ```
 
 ## Step 9: Dependency Injection
 
-### app/api/deps.py
+### app/dependencies/db.py
 
 ```bash
-from app.core.database import get_db
-from sqlalchemy.orm import Session
-from fastapi import Depends
+from app.db.session import AsyncSessionLocal
 
-def get_db_session(db: Session = Depends(get_db)):
-    return db
-
+async def get_db():
+    async with AsyncSessionLocal() as session:
+        try:
+            yield session
+        finally:
+            session.close()
 ```
 
 ## Step 10: JWT Auth Setup
@@ -183,7 +236,7 @@ def create_access_token(data: dict):
 ```
 ## Step 11: Services and Repository Pattern
 
-### app/services/user_service.py
+### app/modules/users/services/UserService.py
 
 ```bash
 class UserService:
@@ -195,7 +248,7 @@ class UserService:
         return self.repo.create(data)
 ```
 
-### app/repositories.user_repo.py
+### app/modules/users/repositories/UserRepo.py
 
 ```bash
 class UserRepository:
