@@ -1,5 +1,7 @@
 from .BaseModel import BaseModel
-from .ModelCommonImport import *
+from sqlalchemy import *
+from sqlalchemy.orm import *
+from app.db.base_class import Base
 
 class User(BaseModel):
     __tablename__ = "users"
