@@ -51,7 +51,7 @@ async def retrieve_user(
 async def create_user(
     request: Request,
     data: UserCreate,
-    session: AsyncSession = Depends[get_async_db]
+    session: AsyncSession = Depends(get_async_db),
 ):
     data = await create_user_service(
         session=session,
@@ -67,7 +67,7 @@ async def create_user(
 async def update_user(
     request: Request,
     user_id: int,
-    session: AsyncSession = Depends[get_async_db]
+    session: AsyncSession = Depends(get_async_db),
 ):
     data = await retrieve_user_service(
         session=session,

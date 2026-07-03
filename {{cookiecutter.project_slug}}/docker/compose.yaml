@@ -5,8 +5,10 @@ services:
     image: postgres:17
     restart: unless-stopped
 
-    env_file:
-      - ../.env
+    environment:
+      - POSTGRES_DB=db
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
 
     volumes:
       - postgres_data:/var/lib/postgresql/data
