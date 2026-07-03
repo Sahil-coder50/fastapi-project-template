@@ -1,8 +1,11 @@
-from sqlalchemy.orm import Query
-from app.pagination.base import PaginatedResponse
+from sqlalchemy import select, func
 
-def paginate(query: Query, limit: int, offset: int):
-    total = query.count()
-    items = query.offset(offset).limit(limit).all()
+async def paginate(session, model, limit: int, offset: int):
+    total_stmt = select(func.count()).select_from(model)
+    total = await session.scalar(total_stmt)
+
+    items_stmt = select(model).offset(offset).limit(limit)
+    result = await session.execute(items_stmt)
+    items = result.scalars().all()
 
     return total, items

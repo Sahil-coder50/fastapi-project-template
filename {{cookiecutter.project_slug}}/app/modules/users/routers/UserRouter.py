@@ -1,33 +1,80 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.users.schemas.UserSchema import UserCreate, UserOut
-from app.modules.users.services.UserService import register_user, list_users
+from typing import Annotated
 
-from app.dependencies.db import get_db
+from app.modules.users.schemas.UserSchema import UserCreate, UserOut
+from app.modules.users.services.UserService import *
+
+from app.core.response import ApiResponse, ApiPaginateResponse
+from app.dependencies.db import get_async_db
 from app.pagination.base import PaginatedResponse
-from app.dependencies.pagination import pagination_params
+from app.dependencies.pagination import pagination_params, PaginationParams
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
-@router.post("/", response_model=UserOut)
-async def create(data: UserCreate, db: AsyncSession = Depends(get_db)):
-    return await register_user(db, data)
-
-@router.get("/", response_model=PaginatedResponse[UserOut])
-async def get_all_users(
-    db: AsyncSession = Depends(get_db),
-    pagination: dict = Depends(pagination_params)
+@router.get("/", response_model=ApiPaginateResponse[UserOut])
+async def list_users(
+        request: Request,
+        pagination: Annotated[PaginationParams, Query()],
+        session: AsyncSession = Depends(get_async_db),
 ):
-    total, users = await list_users(
-        db,
-        pagination["limit"],
-        pagination["offset"]
+    meta, data = await list_paginate_user_service(
+        session=session,
+        limit=pagination.limit,
+        offset=pagination.offset
+    )
+    
+    return ApiPaginateResponse.success(
+        message="All User Record Retrieval Successful.",
+        data=data,
+        meta=meta
     )
 
-    return {
-        "total": total,
-        "limit": pagination["limit"],
-        "offset": pagination["offset"],
-        "data": users
-    }
+@router.get("/{user_id}", response_model=ApiResponse[UserOut])
+async def retrieve_user(
+    request: Request,
+    user_id: int,
+    session: AsyncSession = Depends(get_async_db),
+):
+    data = await retrieve_user_service(
+        session=session,
+        id=user_id
+    )
+
+    return ApiResponse.success(
+        message="User Retrieval Successful.",
+        data=data
+    )
+
+@router.post("/", response_model=ApiResponse[UserOut])
+async def create_user(
+    request: Request,
+    data: UserCreate,
+    session: AsyncSession = Depends[get_async_db]
+):
+    data = await create_user_service(
+        session=session,
+        data=data.model_dump()
+    )
+
+    return ApiResponse.success(
+        message="User Created Successfully.",
+        data=data
+    )
+
+@router.patch("/{user_id}", response_model=ApiResponse[UserOut])
+async def update_user(
+    request: Request,
+    user_id: int,
+    session: AsyncSession = Depends[get_async_db]
+):
+    data = await retrieve_user_service(
+        session=session,
+        id=user_id
+    )
+
+    return ApiResponse(
+        message="User Updated Successfully.",
+        data=data
+    )

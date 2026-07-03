@@ -8,7 +8,7 @@ if TYPE_CHECKING:
 
 class AuditMixin:
     
-    created_by_id: Mapped[int] = mapped_column(
+    created_by_id: Mapped[int | None] = mapped_column(
         Integer,
         ForeignKey("users.id")
     )
@@ -20,7 +20,7 @@ class AuditMixin:
             foreign_keys=[cls.created_by_id]
         )
     
-    updated_by_id: Mapped[int] = mapped_column(
+    updated_by_id: Mapped[int | None] = mapped_column(
         Integer,
         ForeignKey("users.id")
     )
