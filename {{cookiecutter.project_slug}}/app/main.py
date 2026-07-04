@@ -12,7 +12,7 @@ setup_middlewares(app)
 app.add_exception_handler(Exception, global_exception_handler)
 
 # Health endpoint
-@app.get("/health")
+@app.api_route("/health", methods=["GET", "HEAD"])
 async def health():
     return {
         "status": "healthy"
