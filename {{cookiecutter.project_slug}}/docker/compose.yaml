@@ -48,7 +48,7 @@ services:
       - "8000:8000"
 
     volumes:
-      - ../:/app
+      - ../:/{{ cookiecutter.project_name }}
 
     restart: unless-stopped
 
