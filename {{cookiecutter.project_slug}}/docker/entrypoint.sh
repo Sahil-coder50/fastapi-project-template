@@ -11,7 +11,6 @@ echo "PostgreSQL is available."
 
 if [ "$RUN_MIGRATIONS" = "1" ]; then
     echo "Running Alembic migrations..."
-    alembic revision --autogenerate
     alembic upgrade head
 fi
 
