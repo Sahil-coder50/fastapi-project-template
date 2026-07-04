@@ -11,4 +11,11 @@ setup_middlewares(app)
 # Exceptions
 app.add_exception_handler(Exception, global_exception_handler)
 
+# Health endpoint
+@app.get("/health")
+async def health():
+    return {
+        "status": "healthy"
+    }
+
 app.include_router(user_router, prefix="/api/v1")

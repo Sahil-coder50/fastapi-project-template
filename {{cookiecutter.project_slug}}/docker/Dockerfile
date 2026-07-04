@@ -6,6 +6,7 @@ ENV PYTHONDONTWRITEBYTECODE=1
 WORKDIR /{{ cookiecutter.project_name }}
 
 RUN apt-get update && apt-get install -y \
+    wget \
     gcc \
     libpq-dev \
     netcat-openbsd \
