@@ -13,7 +13,7 @@ from app.dependencies.pagination import pagination_params, PaginationParams
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
-@router.get("/", response_model=ApiPaginateResponse[UserOut])
+@router.get("/", response_model=ApiPaginateResponse[list[UserOut]])
 async def list_users(
         request: Request,
         pagination: Annotated[PaginationParams, Query()],
@@ -25,13 +25,13 @@ async def list_users(
         offset=pagination.offset
     )
     
-    return ApiPaginateResponse.success(
+    return ApiPaginateResponse.success_response(
         message="All User Record Retrieval Successful.",
         data=data,
         meta=meta
     )
 
-@router.get("/{user_id}", response_model=ApiResponse[UserOut])
+@router.get("/{user_id}", response_model=ApiResponse[UserOut], response_model_exclude_none=True)
 async def retrieve_user(
     request: Request,
     user_id: int,
@@ -42,7 +42,7 @@ async def retrieve_user(
         id=user_id
     )
 
-    return ApiResponse.success(
+    return ApiResponse.success_response(
         message="User Retrieval Successful.",
         data=data
     )
@@ -58,7 +58,7 @@ async def create_user(
         data=data.model_dump()
     )
 
-    return ApiResponse.success(
+    return ApiResponse.success_response(
         message="User Created Successfully.",
         data=data
     )
@@ -67,14 +67,16 @@ async def create_user(
 async def update_user(
     request: Request,
     user_id: int,
+    data: UserCreate,
     session: AsyncSession = Depends(get_async_db),
 ):
-    data = await retrieve_user_service(
+    data = await update_user_service(
         session=session,
-        id=user_id
+        id=user_id,
+        data=data.model_dump(exclude_unset=True)
     )
 
-    return ApiResponse(
+    return ApiResponse.success_response(
         message="User Updated Successfully.",
         data=data
     )

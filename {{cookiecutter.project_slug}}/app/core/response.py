@@ -5,21 +5,21 @@ T = TypeVar("T")
 
 class ApiResponse(BaseModel, Generic[T]):
     status: str
-    error: Any
+    error: Any | None = None
     message: str | None = None
     data: T | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
     @classmethod
-    def success(cls, data: list[Any], message: str):
+    def success_response(cls, data: list[Any], message: str):
         return cls(
             status="success",
             message=message,
             data=data
         )
     @classmethod
-    def error(cls, error: Any, message: str):
+    def error_response(cls, error: Any, message: str):
         return cls(
             status="error",
             message=message,
@@ -35,7 +35,7 @@ class ApiPaginateResponse(BaseModel, Generic[T]):
     model_config = ConfigDict(from_attributes=True)
 
     @classmethod
-    def success(cls, data: list[Any], message: str, meta: dict[str, Any]| None = None):
+    def success_response(cls, data: list[Any], message: str, meta: dict[str, Any]| None = None):
         return cls(
             status="success",
             message=message,
