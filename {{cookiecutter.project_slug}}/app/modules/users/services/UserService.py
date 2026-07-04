@@ -1,5 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.modules.users.repositories.UserRepo import *
+from app.core.exceptions import AppException
 
 async def register_user(session: AsyncSession, data):
     return await create_user(session, data)
@@ -19,6 +21,16 @@ async def list_paginate_user_service(*, session: AsyncSession, limit: int, offse
 
 async def create_user_service(*, session: AsyncSession, data: dict):
     async with session.begin():
+        if await user_exists(
+            session=session,
+            filters=User.email==data.get("email"),
+        ):
+            raise AppException(
+                status_code=409,
+                message="User with this Email Already Exists.",
+                error="Duplicate Records",
+            )
+
         return await create_user(
             session=session,
             data=data

@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, exists
 from typing import Optional
 
 from app.modules.users.models.UserModel import User
@@ -8,6 +8,11 @@ from app.pagination.limit_offset import paginate
 async def list_users(*, session: AsyncSession, limit: int, offset: int):
     total, items = await paginate(session, User, limit, offset)
     return total, items
+
+async def user_exists(*, session: AsyncSession, filters) -> bool:
+    stmt = select(exists().where(filters))
+    result = await session.execute(stmt)
+    return result.scalar()
 
 async def create_user(*, session: AsyncSession, data: dict) -> User:
     user = User(**data)
