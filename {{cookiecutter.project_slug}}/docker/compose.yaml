@@ -26,7 +26,7 @@ services:
       context: ..
       dockerfile: docker/Dockerfile
 
-    entrypoint: /{{ cookiecutter.project_name }}/docker/entrypoint.sh
+    entrypoint: /{{ cookiecutter.project_slug }}/docker/entrypoint.sh
 
     command: >
       uvicorn app.main:app
