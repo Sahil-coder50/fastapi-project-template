@@ -31,7 +31,7 @@ async def list_users(
         meta=meta
     )
 
-@router.get("/{user_id}", response_model=ApiResponse[UserOut], response_model_exclude_none=True)
+@router.get("/{user_id}/", response_model=ApiResponse[UserOut], response_model_exclude_none=True)
 async def retrieve_user(
     request: Request,
     user_id: int,
@@ -63,7 +63,7 @@ async def create_user(
         data=data
     )
 
-@router.patch("/{user_id}", response_model=ApiResponse[UserOut])
+@router.patch("/{user_id}/", response_model=ApiResponse[UserOut])
 async def update_user(
     request: Request,
     user_id: int,

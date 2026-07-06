@@ -8,5 +8,10 @@ def pagination_params(
     return {"limit": limit, "offset": offset}
 
 class PaginationParams(BaseModel):
-    offset: int = Field(alias="page", default=1, ge=1)
+    page: int = Field(default=1, ge=1)
     limit: int = Field(alias="size", default=10, ge=1, le=100)
+    
+    @property
+    def offset(self) -> int:
+        value = (self.page - 1) * self.limit
+        return value

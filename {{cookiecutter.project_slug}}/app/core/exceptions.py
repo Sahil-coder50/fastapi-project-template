@@ -8,7 +8,7 @@ from .response import ApiResponse
 async def global_exception_handler(request: Request, exc: Exception):
 
     return JSONResponse(
-        status_code=exc.status_code if exc.status_code else 500,
+        status_code=exc.status_code if getattr(exc, "status_code", None) else 500,
         content=ApiResponse.error_response(
             message=exc.message if getattr(exc, "message", None) else "Internal Server Error",
             error=exc.error if getattr(exc, "error", None) else "Internal Server Error",

@@ -3,6 +3,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.modules.users.repositories.UserRepo import *
 from app.core.exceptions import AppException
 
+import math
+
 async def register_user(session: AsyncSession, data):
     return await create_user(session, data)
 
@@ -15,7 +17,7 @@ async def list_paginate_user_service(*, session: AsyncSession, limit: int, offse
     meta = {
         "total": total,
         "size": limit,
-        "page": offset
+        "page": math.floor(offset / limit)+1
     }
     return meta, users
 
