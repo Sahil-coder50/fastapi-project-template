@@ -6,29 +6,29 @@ from typing import Annotated
 from app.modules.users.schemas.UserSchema import UserCreate, UserOut
 from app.modules.users.services.UserService import *
 
-from app.core.response import ApiResponse, ApiPaginateResponse
+from app.core.response import ApiResponse
 from app.dependencies.db import get_async_db
-from app.pagination.base import PaginatedResponse
-from app.dependencies.pagination import pagination_params, PaginationParams
+
+from fast_paginate import Paginate, ApiPaginateResponse
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
-@router.get("/", response_model=ApiPaginateResponse[list[UserOut]])
+@router.get("", response_model=ApiPaginateResponse[list[UserOut]])
 async def list_users(
         request: Request,
-        pagination: Annotated[PaginationParams, Query()],
+        pagination: Annotated[Paginate, Query()],
         session: AsyncSession = Depends(get_async_db),
 ):
-    meta, data = await list_paginate_user_service(
+    total, data = await list_paginate_user_service(
         session=session,
         limit=pagination.limit,
         offset=pagination.offset
     )
     
-    return ApiPaginateResponse.success_response(
-        message="All User Record Retrieval Successful.",
+    return Paginate.get_paginated_response(
+        total=total,
         data=data,
-        meta=meta
+        request=request
     )
 
 @router.get("/{user_id}/", response_model=ApiResponse[UserOut], response_model_exclude_none=True)

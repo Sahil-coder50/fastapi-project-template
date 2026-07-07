@@ -43,7 +43,6 @@ fastapi-project-template
     │   │   └── session.py
     │   ├── dependencies
     │   │   ├── db.py
-    │   │   └── pagination.py
     │   ├── main.py
     │   ├── middlewares
     │   │   ├── __init__.py
@@ -68,10 +67,6 @@ fastapi-project-template
     │   │       └── services
     │   │           ├── UserService.py
     │   │           └── __init__.py
-    │   ├── pagination
-    │   │   ├── base.py
-    │   │   ├── cursor.py
-    │   │   └── limit_offset.py
     │   └── utils
     ├── docker
     │   ├── Dockerfile
@@ -82,7 +77,7 @@ fastapi-project-template
 ### Command for making the Structure
 
 ```bash
-mkdir -p "{{cookiecutter.project_slug}}"/{alembic/versions,app/core,app/db,app/dependencies,app/middlewares,app/modules/users/models,app/modules/users/repositories,app/modules/users/routers,app/modules/users/schemas,app/modules/users/services,app/pagination,app/utils,docker} && \
+mkdir -p "{{cookiecutter.project_slug}}"/{alembic/versions,app/core,app/db,app/dependencies,app/middlewares,app/modules/users/models,app/modules/users/repositories,app/modules/users/routers,app/modules/users/schemas,app/modules/users/services,app/utils,docker} && \
 touch cookiecutter.json README.md \
 "{{cookiecutter.project_slug}}"/README.md \
 "{{cookiecutter.project_slug}}"/requirements.txt \
@@ -91,7 +86,7 @@ touch cookiecutter.json README.md \
 "{{cookiecutter.project_slug}}"/app/main.py \
 "{{cookiecutter.project_slug}}"/app/core/{config.py,exceptions.py,logging.py,security.py} \
 "{{cookiecutter.project_slug}}"/app/db/{base.py,base_class.py,session.py} \
-"{{cookiecutter.project_slug}}"/app/dependencies/{db.py,pagination.py} \
+"{{cookiecutter.project_slug}}"/app/dependencies/{db.py} \
 "{{cookiecutter.project_slug}}"/app/middlewares/{__init__.py,cors.py} \
 "{{cookiecutter.project_slug}}"/app/modules/users/dependency.py \
 "{{cookiecutter.project_slug}}"/app/modules/users/models/{BaseModel.py,ModelCommonImport.py,UserModel.py,__init__.py} \
@@ -99,7 +94,6 @@ touch cookiecutter.json README.md \
 "{{cookiecutter.project_slug}}"/app/modules/users/routers/{UserRouter.py,__init__.py} \
 "{{cookiecutter.project_slug}}"/app/modules/users/schemas/{UserSchema.py,__init__.py} \
 "{{cookiecutter.project_slug}}"/app/modules/users/services/{UserService.py,__init__.py} \
-"{{cookiecutter.project_slug}}"/app/pagination/{base.py,cursor.py,limit_offset.py} \
 "{{cookiecutter.project_slug}}"/docker/{Dockerfile,compose.yaml}
 ```
 

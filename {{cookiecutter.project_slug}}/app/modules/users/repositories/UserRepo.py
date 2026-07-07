@@ -3,7 +3,7 @@ from sqlalchemy import select, exists
 from typing import Optional
 
 from app.modules.users.models.UserModel import User
-from app.pagination.limit_offset import paginate
+from fast_paginate import paginate
 
 async def list_users(*, session: AsyncSession, limit: int, offset: int):
     total, items = await paginate(session, User, limit, offset)

@@ -14,12 +14,8 @@ async def list_paginate_user_service(*, session: AsyncSession, limit: int, offse
         limit=limit,
         offset=offset
     )
-    meta = {
-        "total": total,
-        "size": limit,
-        "page": math.floor(offset / limit)+1
-    }
-    return meta, users
+
+    return total, users
 
 async def create_user_service(*, session: AsyncSession, data: dict):
     async with session.begin():
