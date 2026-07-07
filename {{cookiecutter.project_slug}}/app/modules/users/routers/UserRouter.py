@@ -16,7 +16,7 @@ router = APIRouter(prefix="/users", tags=["Users"])
 @router.get("", response_model=ApiPaginateResponse[list[UserOut]])
 async def list_users(
         request: Request,
-        pagination: Annotated[Paginate, Query()],
+        pagination: Annotated[Paginate, Depends()],
         session: AsyncSession = Depends(get_async_db),
 ):
     total, data = await list_paginate_user_service(
@@ -25,7 +25,7 @@ async def list_users(
         offset=pagination.offset
     )
     
-    return Paginate.get_paginated_response(
+    return pagination.get_paginated_response(
         total=total,
         data=data,
         request=request
