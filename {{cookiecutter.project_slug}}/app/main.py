@@ -5,14 +5,17 @@ from app.modules.users.routers import user_router
 from app.middlewares import setup_middlewares
 from app.core.exceptions import global_exception_handler, sqlalchemy_exception_handler
 
+from app.core import setup_exceptions
+
 app = FastAPI(title="Production FastAPI")
 
 # Register middlewares
 setup_middlewares(app)
 
 # Exceptions
-app.add_exception_handler(SQLAlchemyError, sqlalchemy_exception_handler)
-app.add_exception_handler(Exception, global_exception_handler)
+# app.add_exception_handler(SQLAlchemyError, sqlalchemy_exception_handler)
+# app.add_exception_handler(Exception, global_exception_handler)
+setup_exceptions(app)
 
 # Health endpoint
 @app.api_route("/health", methods=["GET", "HEAD"])

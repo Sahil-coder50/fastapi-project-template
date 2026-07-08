@@ -5,11 +5,18 @@ from typing import Optional
 from app.modules.users.models.UserModel import User
 from fast_paginate import paginate
 
-def build_query(filters, combine_with: Optional[str] = "and"):
+from enum import StrEnum
 
-    if combine_with == "and":
+class Operator(StrEnum):
+    AND = and_
+    OR = or_
+    NOT = not_
+
+def build_query(filters, combine_with: Optional[str] = Operator.AND):
+
+    if combine_with == Operator.AND:
         combinator = and_(True, *filters)
-    elif combine_with == "or":
+    elif combine_with == Operator.OR:
         combinator = or_(*filters)
     else:
         if len(filters) > 1:
@@ -23,7 +30,7 @@ def build_query(filters, combine_with: Optional[str] = "and"):
 
 async def list_users(*, session: AsyncSession, limit: int, offset: int):
     filters = [or_(User.is_deleted == False, User.email == "sahil4@yopmail.com")]
-    combinator = build_query(filters, combine_with="not")
+    combinator = build_query(filters, combine_with=Operator.AND)
     orders = [User.created_at.desc(),]
     total, items = await paginate(session, User, limit, offset, combinator, orders)
     return total, items

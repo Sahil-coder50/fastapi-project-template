@@ -49,3 +49,9 @@ class NoRecordException(Exception):
         self.status_code = 404
         self.message = f"No {model} exist in the Database for the given query."
         self.error = f"{model} not Found."
+
+def setup_global_exception(app):
+    app.add_exception_handler(Exception, global_exception_handler)
+
+def setup_db_exception(app):
+    app.add_exception_handler(SQLAlchemyError, sqlalchemy_exception_handler)
