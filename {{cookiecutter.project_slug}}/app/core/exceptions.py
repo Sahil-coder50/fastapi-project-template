@@ -1,7 +1,8 @@
 from fastapi import Request
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
-import traceback
+
+from typing import Optional
 
 from .response import ApiResponse
 
@@ -20,7 +21,7 @@ async def sqlalchemy_exception_handler(
     exc: SQLAlchemyError,
 ):
     return JSONResponse(
-        status_code=500,
+        status_code=400,
         content=ApiResponse.error_response(
             message=str(exc.orig) if getattr(exc, "orig", None) else "Database Error",
             error=exc.__class__.__name__,
@@ -37,3 +38,14 @@ class AppException(Exception):
         self.status_code = status_code
         self.message = message
         self.error = error
+
+
+class NoRecordException(Exception):
+    def __init__(
+            self,
+            model: Optional[str] = ("record")
+    ):
+        model = model.title()
+        self.status_code = 404
+        self.message = f"No {model} exist in the Database for the given query."
+        self.error = f"{model} not Found."

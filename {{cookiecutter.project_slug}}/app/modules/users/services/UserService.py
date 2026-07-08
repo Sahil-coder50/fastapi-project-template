@@ -1,9 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import NoResultFound
 
 from app.modules.users.repositories.UserRepo import *
-from app.core.exceptions import AppException
-
-import math
+from app.core.exceptions import AppException, NoRecordException
 
 async def register_user(session: AsyncSession, data):
     return await create_user(session, data)
@@ -19,9 +18,9 @@ async def list_paginate_user_service(*, session: AsyncSession, limit: int, offse
 
 async def create_user_service(*, session: AsyncSession, data: dict):
     async with session.begin():
-        if await user_exists(
+        if await filter_users(
             session=session,
-            filters=User.email==data.get("email"),
+            filters=[User.email==data.get("email")],
         ):
             raise AppException(
                 status_code=409,
@@ -40,10 +39,10 @@ async def retrieve_user_service(*, session: AsyncSession, id: int):
             session=session,
             id=id
         )
-    except Exception as e:
-        raise ValueError(
-            f"{e}"
-        )
+    except NoResultFound:
+        raise NoRecordException(
+                model="user"
+            )
     else:
         return user
 
@@ -54,9 +53,9 @@ async def update_user_service(*, session: AsyncSession, id: int, data: dict):
                 session=session ,
                 id=id
             )
-        except Exception as e:
-            raise ValueError(
-                f"{e}"
+        except NoResultFound:
+            raise NoRecordException(
+                model="user"
             )
         else:
             return await update_user(
@@ -72,12 +71,13 @@ async def delete_user_service(*, session: AsyncSession, id: int):
                 session=session,
                 id=id
             )
-        except Exception as e:
-            raise ValueError(
-                f"{e}"
+        except NoResultFound:
+            raise NoRecordException(
+                model="user"
             )
         else:
             return await delete_user(
                 session=session,
                 user=user
             )
+
