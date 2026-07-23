@@ -1,9 +1,7 @@
 from fastapi import FastAPI
-from sqlalchemy.exc import SQLAlchemyError
 
 from app.modules.users.routers import user_router
 from app.middlewares import setup_middlewares
-from app.core.exceptions import global_exception_handler, sqlalchemy_exception_handler
 
 from app.core import setup_exceptions
 
@@ -13,8 +11,6 @@ app = FastAPI(title="Production FastAPI")
 setup_middlewares(app)
 
 # Exceptions
-# app.add_exception_handler(SQLAlchemyError, sqlalchemy_exception_handler)
-# app.add_exception_handler(Exception, global_exception_handler)
 setup_exceptions(app)
 
 # Health endpoint

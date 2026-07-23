@@ -1,9 +1,9 @@
-from .BaseModel import BaseModel
+from app.mixins import BaseModelMixin
 from sqlalchemy import *
 from sqlalchemy.orm import *
 from app.db.base_class import Base
 
-class User(BaseModel):
+class User(BaseModelMixin):
     __tablename__ = "users"
 
     id: Mapped[int] =  mapped_column(Integer, primary_key=True, index=True)

@@ -47,25 +47,29 @@ fastapi-project-template
     │   ├── middlewares
     │   │   ├── __init__.py
     │   │   └── cors.py
+    │   ├── mixins
+    │   │   ├── __init__.py
+    │   │   └── audit_mixin.py
+    │   │   └── base_model_mixin.py
+    │   │   └── soft_delete.py
+    │   │   └── time_mixin.py
     │   ├── modules
     │   │   └── users
     │   │       ├── dependency.py
     │   │       ├── models
-    │   │       │   ├── BaseModel.py
-    │   │       │   ├── ModelCommonImport.py
-    │   │       │   ├── UserModel.py
+    │   │       │   ├── user_model.py
     │   │       │   └── __init__.py
     │   │       ├── repositories
-    │   │       │   ├── UserRepo.py
+    │   │       │   ├── user_repo.py
     │   │       │   └── __init__.py
     │   │       ├── routers
-    │   │       │   ├── UserRouter.py
+    │   │       │   ├── user_router.py
     │   │       │   └── __init__.py
     │   │       ├── schemas
-    │   │       │   ├── UserSchema.py
+    │   │       │   ├── user_schema.py
     │   │       │   └── __init__.py
     │   │       └── services
-    │   │           ├── UserService.py
+    │   │           ├── user_service.py
     │   │           └── __init__.py
     │   └── utils
     ├── docker
@@ -88,13 +92,14 @@ touch cookiecutter.json README.md \
 "{{cookiecutter.project_slug}}"/app/db/{base.py,base_class.py,session.py} \
 "{{cookiecutter.project_slug}}"/app/dependencies/{db.py} \
 "{{cookiecutter.project_slug}}"/app/middlewares/{__init__.py,cors.py} \
+"{{cookiecutter.project_slug}}"/app/mixins/{__init__.py,audit_mixin.py,base_model_mixin.py,soft_delete.py,time_mixin.py} \
 "{{cookiecutter.project_slug}}"/app/modules/users/dependency.py \
-"{{cookiecutter.project_slug}}"/app/modules/users/models/{BaseModel.py,ModelCommonImport.py,UserModel.py,__init__.py} \
-"{{cookiecutter.project_slug}}"/app/modules/users/repositories/{UserRepo.py,__init__.py} \
-"{{cookiecutter.project_slug}}"/app/modules/users/routers/{UserRouter.py,__init__.py} \
-"{{cookiecutter.project_slug}}"/app/modules/users/schemas/{UserSchema.py,__init__.py} \
-"{{cookiecutter.project_slug}}"/app/modules/users/services/{UserService.py,__init__.py} \
-"{{cookiecutter.project_slug}}"/docker/{Dockerfile,compose.yaml}
+"{{cookiecutter.project_slug}}"/app/modules/users/models/{user_model.py,__init__.py} \
+"{{cookiecutter.project_slug}}"/app/modules/users/repositories/{user_repo.py,__init__.py} \
+"{{cookiecutter.project_slug}}"/app/modules/users/routers/{user_router.py,__init__.py} \
+"{{cookiecutter.project_slug}}"/app/modules/users/schemas/{user_schema.py,__init__.py} \
+"{{cookiecutter.project_slug}}"/app/modules/users/services/{user_service.py,__init__.py} \
+"{{cookiecutter.project_slug}}"/docker/{Dockerfile,compose.yaml,entrypoint.sh,nginx.conf}
 ```
 
 ## Step 4: cookiecutter.json
@@ -127,7 +132,7 @@ app.include_router(router, prefix="/api/v1")
 
 ```bash
 from fastapi import APIRouter
-from app.modules.users.UserRouter import health      # Example
+from app.modules.users.user_router import health      # Example
 
 router = APIRouter()
 
@@ -135,7 +140,7 @@ router.include_router(health.router, prefix="/health", tags=["Health"])
 
 ```
 
-### app/modules/users/UserRouter.py
+### app/modules/users/user_router.py
 
 ```bash
 from fastapi import APIRouter
@@ -230,25 +235,26 @@ def create_access_token(data: dict):
 ```
 ## Step 11: Services and Repository Pattern
 
-### app/modules/users/services/UserService.py
+### app/modules/users/services/user_service.py
 
 ```bash
 class UserService:
 
-    def __init__(self, repo):
-        self.repo = repo
+    def __init__(self, session: AsyncSession):
+        self.session=session
+        self.repo=UserRepo(session=self.session)
 
     def create_user(self, data):
         return self.repo.create(data)
 ```
 
-### app/modules/users/repositories/UserRepo.py
+### app/modules/users/repositories/user_repo.py
 
 ```bash
-class UserRepository:
+class UserRepo:
 
-    def __init__(self, db):
-        self.db = db
+    def __init__(self, session: AsyncSession):
+        self.session = self.session
 
     def create(self, data):
         pass
@@ -283,33 +289,176 @@ python-jose
 ### Dockerfile
 
 ```bash
-FROM python:3.11
+FROM python:3.12-slim
 
-WORKDIR /app
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+
+WORKDIR /{{ cookiecutter.project_slug }}
+
+RUN apt-get update && apt-get install -y \
+    wget \
+    gcc \
+    libpq-dev \
+    netcat-openbsd \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-RUN pip install -r requirements.txt
+RUN chmod +x /{{ cookiecutter.project_slug }}/docker/entrypoint.sh
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+EXPOSE 8000
 ```
 
-### docker-compose.yml
+### compose.yaml
 
 ```bash
-version: "3.9"
+name: {{ cookiecutter.project_name }}
 
 services:
+  postgres:
+    image: postgres:17
+    restart: unless-stopped
+
+    environment:
+      - POSTGRES_DB=test_db
+      - POSTGRES_USER=test_user
+      - POSTGRES_PASSWORD=password
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test_user -d test_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  redis:
+    image: redis
+    restart: unless-stopped
+
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
   web:
     build:
       context: ..
       dockerfile: docker/Dockerfile
-    ports:
-      - "8000:8000"
 
-  db:
-    image: postgres:15
+    entrypoint: /{{ cookiecutter.project_slug }}/docker/entrypoint.sh
+
+    command: >
+      uvicorn app.main:app
+      --host 0.0.0.0
+      --port 8000
+      --workers 4
+
+    environment:
+      RUN_MIGRATIONS: "1"
+
+    env_file:
+      - ../.env
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:latest
+    restart: unless-stopped
+    ports:
+      - "8085:80"
+    volumes:
+      - ../docker/nginx.conf:/etc/nginx/nginx.conf
+      - static_volume:/{{ cookiecutter.project_slug }}/staticfiles
+    depends_on:
+      web:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  static_volume:
 ```
+
+### entrypoint.sh
+
+```bash
+#!/bin/sh
+set -e
+
+echo "Waiting for PostgreSQL..."
+
+while ! nc -z postgres 5432; do
+    sleep 1
+done
+
+echo "PostgreSQL is available."
+
+if [ "$RUN_MIGRATIONS" = "1" ]; then
+    echo "Running Alembic migrations..."
+    alembic upgrade head
+fi
+
+echo "Starting FastAPI..."
+
+exec "$@"
+```
+
+### nginx.conf
+
+```bash
+events {}
+
+http {
+    upstream uvicorn {
+        server web:8000;
+    }
+
+    server {
+        listen 80;
+        server_name localhost;
+
+        client_max_body_size 20M;
+
+        location /static/ {
+            alias /{{ cookiecutter.project_slug }}/staticfiles/;
+        }
+
+        location / {
+            proxy_pass http://uvicorn;
+
+            proxy_http_version 1.1;
+
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+
+        }
+    }
+}
+```
+
 ## Step 15: .env
 
 ```bash

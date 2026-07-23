@@ -3,25 +3,27 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from typing import Annotated
 
-from app.modules.users.schemas.UserSchema import UserCreate, UserOut
-from app.modules.users.services.UserService import *
+from app.modules.users.schemas.user_schemna import UserCreate, UserOut
+from app.modules.users.services.user_service import UserService
 
 from app.core.response import ApiResponse
 from app.dependencies.db import get_async_db
+
+from ..dependency import get_user_service
 
 from fast_paginate import Paginate, ApiPaginateResponse
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
 
+
 @router.get("", response_model=ApiPaginateResponse[list[UserOut]])
 async def list_users(
         request: Request,
         pagination: Annotated[Paginate, Depends()],
-        session: AsyncSession = Depends(get_async_db),
+        service: UserService = Depends(get_user_service),
 ):
-    total, data = await list_paginate_user_service(
-        session=session,
+    total, data = await service.list_paginate_user(
         limit=pagination.limit,
         offset=pagination.offset
     )
@@ -37,10 +39,9 @@ async def list_users(
 async def retrieve_user(
     request: Request,
     user_id: int,
-    session: AsyncSession = Depends(get_async_db),
+    service: UserService = Depends(get_user_service),
 ):
-    data = await retrieve_user_service(
-        session=session,
+    data = await service.retrieve_user(
         id=user_id
     )
 
@@ -54,10 +55,9 @@ async def retrieve_user(
 async def create_user(
     request: Request,
     data: UserCreate,
-    session: AsyncSession = Depends(get_async_db),
+    service: UserService = Depends(get_user_service),
 ):
-    data = await create_user_service(
-        session=session,
+    data = await service.create_user(
         data=data.model_dump()
     )
 
@@ -72,10 +72,9 @@ async def update_user(
     request: Request,
     user_id: int,
     data: UserCreate,
-    session: AsyncSession = Depends(get_async_db),
+    service: UserService = Depends(get_user_service),
 ):
-    data = await update_user_service(
-        session=session,
+    data = await service.update_user(
         id=user_id,
         data=data.model_dump(exclude_unset=True)
     )
@@ -90,10 +89,9 @@ async def update_user(
 async def delete_user(
     request: Request,
     user_id: int,
-    session: AsyncSession = Depends(get_async_db),
+    service: UserService = Depends(get_user_service),
 ):
-    user = await delete_user_service(
-        session=session,
+    user = await service.delete_user(
         id=user_id
     )
 
