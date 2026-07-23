@@ -9,10 +9,6 @@ class UserService:
     def __init__(self, session: AsyncSession):
         self.session=session
         self.repo=UserRepo(session=self.session)
-        
-
-    async def register_user(self, data):
-        return await self.repo.create_user(data=data)
 
     async def list_paginate_user(self, *, limit: int, offset: int):
         total, users =  await self.repo.list_users(
@@ -51,32 +47,20 @@ class UserService:
 
     async def update_user(self, *, id: int, data: dict):
         async with self.session.begin():
-            try:
-                user = await self.repo.retrieve_user(
-                    id=id
-                )
-            except NoResultFound:
-                raise NoRecordException(
-                    model="user"
-                )
-            else:
-                return await self.repo.update_user( 
-                    user=user,
-                    data=data
-                )
+
+            user = self.retrieve_user(id=id)
+
+            return await self.repo.update_user( 
+                user=user,
+                data=data
+            )
             
     async def delete_user(self, *, id: int):
         async with self.session.begin():
-            try:
-                user = await self.repo.retrieve_user(
-                    id=id
-                )
-            except NoResultFound:
-                raise NoRecordException(
-                    model="user"
-                )
-            else:
-                return await self.repo.delete_user(
-                    user=user
-                )
+
+            user = self.retrieve_user(id=id)
+
+            return await self.repo.delete_user(
+                user=user
+            )
 

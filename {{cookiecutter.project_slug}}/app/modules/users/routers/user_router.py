@@ -3,11 +3,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from typing import Annotated
 
-from app.modules.users.schemas.user_schemna import UserCreate, UserOut
+from app.modules.users.schemas.user_schema import UserCreate, UserOut
 from app.modules.users.services.user_service import UserService
 
 from app.core.response import ApiResponse
-from app.dependencies.db import get_async_db
 
 from ..dependency import get_user_service
 
@@ -25,7 +24,7 @@ async def list_users(
 ):
     total, data = await service.list_paginate_user(
         limit=pagination.limit,
-        offset=pagination.offset
+        offset=pagination.offset,
     )
     
     return pagination.get_paginated_response(

@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, exists, and_, or_, not_
 from typing import Optional
 
-from app.modules.users.models.UserModel import User
+from app.modules.users.models.user_model import User
 from fast_paginate import paginate
 
 from enum import StrEnum
@@ -45,11 +45,6 @@ class UserRepo:
         items = result.scalars().all()
 
         return items
-
-    async def user_exists(self, *, filters) -> bool:
-        stmt = select(exists().where(filters))
-        result = await self.session.execute(stmt)
-        return result.scalar()
 
     async def create_user(self, *, data: dict) -> User:
         user = User(**data)
